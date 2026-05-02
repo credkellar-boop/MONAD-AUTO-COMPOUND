@@ -1,0 +1,11 @@
+{
+  "networks": {
+    "monad": {
+      "chainId": 10143,
+      "stakingContract": "0xYourStakingContractAddressHere",
+      "tokenAddress": "0xYourTokenAddressHere"
+    }
+  },
+  "compoundingInterval": "0 0 * * *", 
+  "gasLimitBuffer": 120
+}
