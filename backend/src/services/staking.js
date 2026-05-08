@@ -1,72 +1,48 @@
-// backend/src/services/staking.js
 const { ethers } = require('ethers');
 const config = require('../../config.json');
 
-// Your Revenue Wallet
-const DEV_WALLET = "0xYourWalletAddressHere"; 
-const FEE_PERCENTAGE = 3; // Example: 3% performance fee
+// Move these to .env for security and flexibility
+const DEV_WALLET = process.env.DEV_WALLET_ADDRESS; 
+const FEE_PERCENTAGE = BigInt(process.env.FEE_PERCENTAGE || 3); 
 
-const STAKING_ABI = [
-    "function claimRewards() external",
-    "function stake(uint256 amount) external",
-    "function pendingRewards(address user) external view returns (uint256)"
-];
-
-// Added for the fee transfer logic
-const ERC20_ABI = [
-    "function transfer(address to, uint256 amount) public returns (bool)"
-];
-
-const autoCompound = async (wallet, network = 'monad') => {
+const autoCompound = async (wallet, networkName = 'monad') => {
     try {
-        const networkConfig = config.networks[network];
+        const networkConfig = config.networks[networkName];
         const stakingContract = new ethers.Contract(
             networkConfig.stakingContract,
             STAKING_ABI,
             wallet
         );
 
-        console.log(`Checking pending rewards on ${network}...`);
+        console.log('Checking pending rewards...');
         const pending = await stakingContract.pendingRewards(wallet.address);
-        
+
         if (pending > 0n) {
-            // 1. Claim all rewards
-            console.log(`Claiming ${ethers.formatEther(pending)} tokens...`);
+            // 1. Claim Rewards
             const claimTx = await stakingContract.claimRewards();
             await claimTx.wait();
-            
-            // 2. Calculate the Fee
-            const feeAmount = (pending * BigInt(FEE_PERCENTAGE)) / 100n;
-            const amountToRestake = pending - feeAmount;
+            console.log(`Claimed ${ethers.formatEther(pending)} tokens.`);
 
-            // 3. Send Fee to your Dev Wallet
-            console.log(`Sending ${FEE_PERCENTAGE}% fee to dev wallet...`);
-            const tokenContract = new ethers.Contract(
-                networkConfig.tokenAddress, 
-                ERC20_ABI, 
-                wallet
-            );
-            const feeTx = await tokenContract.transfer(DEV_WALLET, feeAmount);
-            await feeTx.wait();
+            // 2. Calculate and Send Fee
+            const feeAmount = (pending * FEE_PERCENTAGE) / 100n;
+            const remainder = pending - feeAmount;
 
-            // 4. Stake the remaining balance
-            console.log(`Staking ${ethers.formatEther(amountToRestake)} tokens...`);
-            const stakeTx = await stakingContract.stake(amountToRestake);
+            if (feeAmount > 0n) {
+                const feeTx = await wallet.sendTransaction({
+                    to: DEV_WALLET,
+                    value: feeAmount
+                });
+                await feeTx.wait();
+            }
+
+            // 3. Re-stake the remainder
+            const stakeTx = await stakingContract.stake(remainder);
             await stakeTx.wait();
-            
-            console.log('Successfully compounded with fee collected!');
-            return { 
-                success: true, 
-                userStaked: ethers.formatEther(amountToRestake),
-                feeCollected: ethers.formatEther(feeAmount)
-            };
+            console.log('Auto-compounding successful.');
         } else {
-            return { success: false, reason: 'No pending rewards' };
+            console.log('No rewards to compound.');
         }
     } catch (error) {
-        console.error('Error during compounding:', error);
-        throw error;
+        console.error('Compounding failed:', error.message);
     }
 };
-
-module.exports = { autoCompound };
