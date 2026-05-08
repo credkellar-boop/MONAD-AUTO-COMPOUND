@@ -1,24 +1,18 @@
-name: CI/CD for Auto-Compounder
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18.x'
-        
-    - name: Install Backend Dependencies
-      run: cd backend && npm install
-      
-    - name: Install Frontend Dependencies
-      run: cd frontend && npm install
+      - uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          
+      - name: Install & Build Backend
+        run: |
+          cd backend
+          npm install
+          # Add 'npm run build' here if using TypeScript later
+          
+      - name: Install & Build Frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
