@@ -5,3 +5,10 @@
   "autoCompoundIntervalMs": 3600000,
   "enableOmnichain": true
 }
+{
+  "network": "monad",
+  "rpcUrl": "https://testnet-rpc.monad.xyz",
+  "chainId": 10143,
+  "stakingContractAddress": "0xYourStakingContractAddressHere",
+  "autoCompoundIntervalMs": 3600000
+}
