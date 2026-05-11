@@ -1,0 +1,7 @@
+{
+  "network": "monad",
+  "rpcUrl": "https://testnet-rpc.monad.xyz",
+  "chainId": 10143,
+  "autoCompoundIntervalMs": 3600000,
+  "enableOmnichain": true
+}
