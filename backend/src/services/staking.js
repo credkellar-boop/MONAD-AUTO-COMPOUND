@@ -1,9 +1,11 @@
 const { ethers } = require('ethers');
 const config = require('../../config.json');
+// Make sure to create this ABI file!
+const STAKING_ABI = require('../abis/Staking.json'); 
 
 // Move these to .env for security and flexibility
-const DEV_WALLET = process.env.DEV_WALLET_ADDRESS; 
-const FEE_PERCENTAGE = BigInt(process.env.FEE_PERCENTAGE || 3); 
+const DEV_WALLET = process.env.DEV_WALLET_ADDRESS;
+const FEE_PERCENTAGE = BigInt(process.env.FEE_PERCENTAGE || 3);
 
 const autoCompound = async (wallet, networkName = 'monad') => {
     try {
@@ -27,12 +29,13 @@ const autoCompound = async (wallet, networkName = 'monad') => {
             const feeAmount = (pending * FEE_PERCENTAGE) / 100n;
             const remainder = pending - feeAmount;
 
-            if (feeAmount > 0n) {
+            if (feeAmount > 0n && DEV_WALLET) {
                 const feeTx = await wallet.sendTransaction({
                     to: DEV_WALLET,
                     value: feeAmount
                 });
                 await feeTx.wait();
+                console.log(`Fee sent to dev wallet: ${ethers.formatEther(feeAmount)}`);
             }
 
             // 3. Re-stake the remainder
@@ -46,3 +49,5 @@ const autoCompound = async (wallet, networkName = 'monad') => {
         console.error('Compounding failed:', error.message);
     }
 };
+
+module.exports = { autoCompound };
