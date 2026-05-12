@@ -18,9 +18,11 @@ jobs:
         with:
           node-version: '20.x'
           cache: 'npm'
+          # This line tells GitHub where your lock file actually is
+          cache-dependency-path: './backend/package-lock.json'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
         working-directory: ./backend
 
       - name: Run tests
