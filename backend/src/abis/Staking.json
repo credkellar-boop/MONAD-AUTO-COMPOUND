@@ -1,0 +1,5 @@
+[
+  "function pendingRewards(address user) view returns (uint256)",
+  "function claimRewards() returns (uint256)",
+  "function stake(uint256 amount)"
+]
